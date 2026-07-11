@@ -5,16 +5,21 @@ import { setLocalStorage, getLocalStorage, removeLocalStorage } from '../utils/h
 const authService = {
   login: async (email, password) => {
     try {
-      const response = await api.post(API_ENDPOINTS.LOGIN, {
-        email,
-        password,
-      });
+      const response = await api.post(API_ENDPOINTS.LOGIN, { email, password });
 
-      const { accessToken, user } = response.data;
-      
+      // Backend returns flat object: { id, username, email, role, accessToken, tokenType, expiresIn }
+      const data = response.data;
+      const accessToken = data.accessToken ?? data.token;
+      const user = {
+        id: data.id,
+        username: data.username,
+        email: data.email,
+        role: data.role,
+      };
+
       setLocalStorage('accessToken', accessToken);
       setLocalStorage('user', user);
-      
+
       return { success: true, user };
     } catch (error) {
       return {
@@ -57,7 +62,6 @@ const authService = {
     try {
       const response = await api.post(API_ENDPOINTS.REFRESH_TOKEN);
       const { accessToken } = response.data;
-      
       setLocalStorage('accessToken', accessToken);
       return { success: true, accessToken };
     } catch (error) {
@@ -80,10 +84,7 @@ const authService = {
 
   changePassword: async (userId, oldPassword, newPassword) => {
     try {
-      await api.post(`/api/users/${userId}/change-password`, {
-        oldPassword,
-        newPassword,
-      });
+      await api.post(`/api/users/${userId}/change-password`, { oldPassword, newPassword });
       return { success: true };
     } catch (error) {
       return {
