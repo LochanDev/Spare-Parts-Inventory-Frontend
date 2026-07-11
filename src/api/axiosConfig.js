@@ -9,7 +9,7 @@ const api = axios.create({
   },
 });
 
-// Request interceptor to add JWT token
+// Attach JWT token to every request
 api.interceptors.request.use(
   (config) => {
     const token = getLocalStorage('accessToken');
@@ -18,17 +18,16 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Response interceptor for error handling
+// Only redirect to /login on 401 for NON-auth endpoints
+// Auth endpoints (login/register) returning 401/400 should be handled by the caller
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      // Token expired or invalid
+    const isAuthEndpoint = error.config?.url?.includes('/auth/');
+    if (error.response?.status === 401 && !isAuthEndpoint) {
       removeLocalStorage('accessToken');
       removeLocalStorage('user');
       window.location.href = '/login';

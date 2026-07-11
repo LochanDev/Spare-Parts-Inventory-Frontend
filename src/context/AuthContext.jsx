@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect, useCallback } from 'react';
 import authService from '../services/authService';
 
 export const AuthContext = createContext();
@@ -9,47 +9,39 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is already logged in
     const currentUser = authService.getCurrentUser();
-    if (currentUser) {
+    const token = authService.getAccessToken();
+    console.log('[AuthContext] mount check — token:', token, 'user:', currentUser);
+    if (currentUser && token) {
       setUser(currentUser);
       setIsAuthenticated(true);
     }
     setIsLoading(false);
   }, []);
 
-  const login = async (email, password) => {
-    setIsLoading(true);
+  const login = useCallback(async (email, password) => {
     const result = await authService.login(email, password);
+    console.log('[AuthContext] login result:', result);
     if (result.success) {
       setUser(result.user);
       setIsAuthenticated(true);
+      console.log('[AuthContext] state set — isAuthenticated: true');
     }
-    setIsLoading(false);
     return result;
-  };
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     authService.logout();
     setUser(null);
     setIsAuthenticated(false);
-  };
+  }, []);
 
-  const updateUser = (updatedUser) => {
-    setUser(updatedUser);
-  };
+  const updateUser = useCallback((updatedUser) => setUser(updatedUser), []);
 
-  const value = {
-    user,
-    isAuthenticated,
-    isLoading,
-    login,
-    logout,
-    updateUser,
-  };
+  console.log('[AuthContext] render — isLoading:', isLoading, 'isAuthenticated:', isAuthenticated);
 
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={{ user, isAuthenticated, isLoading, login, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

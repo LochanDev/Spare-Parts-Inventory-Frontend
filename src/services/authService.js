@@ -9,6 +9,7 @@ const authService = {
 
       // Backend returns flat object: { id, username, email, role, accessToken, tokenType, expiresIn }
       const data = response.data;
+      console.log('[authService] raw response:', data);
       const accessToken = data.accessToken ?? data.token;
       const user = {
         id: data.id,

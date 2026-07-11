@@ -8,12 +8,13 @@ export default defineConfig({
     port: 5173,
     strictPort: false,
     open: true,
-    cors: true,
     proxy: {
       '/api': {
         target: 'http://localhost:8080',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '/api'),
+        // Backend context-path is /api, so strip it before forwarding:
+        // /api/auth/login -> http://localhost:8080/api/auth/login
+        // No rewrite needed — pass /api through as-is
       },
     },
   },

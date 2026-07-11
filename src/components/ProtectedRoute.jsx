@@ -5,20 +5,18 @@ import { useAuth } from '../hooks/useAuth';
 const ProtectedRoute = ({ children, requiredRole = null }) => {
   const { isAuthenticated, isLoading, user } = useAuth();
 
+  console.log('[ProtectedRoute] isLoading:', isLoading, 'isAuthenticated:', isAuthenticated);
+
   if (isLoading) {
     return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100vh',
-      }}>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
         <div>Loading...</div>
       </div>
     );
   }
 
   if (!isAuthenticated) {
+    console.log('[ProtectedRoute] NOT authenticated — redirecting to /login');
     return <Navigate to="/login" replace />;
   }
 

@@ -15,6 +15,7 @@ const LoginPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+     console.log('[LoginPage] handleSubmit fired');
 
     if (!email || !password) {
       toast.error('Please fill in all fields');

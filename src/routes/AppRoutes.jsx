@@ -24,6 +24,9 @@ import NotFound from '../pages/NotFound';
 const AppRoutes = () => {
   return (
     <Routes>
+      {/* Root redirect */}
+      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+
       {/* Auth Routes */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
@@ -148,7 +151,7 @@ const AppRoutes = () => {
         }
       />
 
-      {/* 404 Not Found */}
+      {/* 404 */}
       <Route path="/404" element={<NotFound />} />
       <Route path="*" element={<Navigate to="/404" replace />} />
     </Routes>
