@@ -75,7 +75,7 @@ const supplierService = {
       const response = await api.get(
         `${API_ENDPOINTS.SUPPLIERS}/search`,
         {
-          params: { q: query },
+          params: { keyword: query },
         }
       );
       return { success: true, data: response.data };

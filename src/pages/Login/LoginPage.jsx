@@ -3,7 +3,6 @@ import { useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../hooks/useAuth';
 import AuthLayout from '../../layouts/AuthLayout';
-import Loader from '../../components/Loader/Loader';
 import './LoginPage.css';
 
 const LoginPage = () => {
@@ -13,25 +12,28 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-     console.log('[LoginPage] handleSubmit fired');
-
+  const handleLogin = async () => {
     if (!email || !password) {
       toast.error('Please fill in all fields');
       return;
     }
-
     setIsLoading(true);
-    const result = await login(email, password);
-
-    if (result.success) {
-      toast.success('Login successful!');
-      navigate('/dashboard');
-    } else {
-      toast.error(result.message || 'Login failed');
+    try {
+      const result = await login(email, password);
+      if (result.success) {
+        toast.success('Login successful!');
+        navigate('/dashboard', { replace: true });
+      } else {
+        toast.error(result.message || 'Login failed');
+      }
+    } catch (err) {
+      toast.error('An unexpected error occurred');
     }
     setIsLoading(false);
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') handleLogin();
   };
 
   return (
@@ -39,8 +41,7 @@ const LoginPage = () => {
       <div className="login-form-container">
         <h2 className="form-title">Login to Your Account</h2>
         <p className="form-subtitle">Enter your credentials to continue</p>
-
-        <form onSubmit={handleSubmit} className="login-form">
+        <div className="login-form">
           <div className="form-group">
             <label htmlFor="email">Email Address</label>
             <input
@@ -48,12 +49,11 @@ const LoginPage = () => {
               id="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
+              onKeyDown={handleKeyDown}
+              placeholder="admin@spareparts.com"
               disabled={isLoading}
-              required
             />
           </div>
-
           <div className="form-group">
             <label htmlFor="password">Password</label>
             <input
@@ -61,27 +61,24 @@ const LoginPage = () => {
               id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={handleKeyDown}
               placeholder="Enter your password"
               disabled={isLoading}
-              required
             />
           </div>
-
           <button
-            type="submit"
+            type="button"
             className="btn-submit"
             disabled={isLoading}
+            onClick={handleLogin}
           >
-            {isLoading ? <Loader size="sm" /> : 'Login'}
+            {isLoading ? 'Logging in...' : 'Login'}
           </button>
-        </form>
-
+        </div>
         <div className="form-footer">
           <p>
             Don't have an account?{' '}
-            <Link to="/register" className="link">
-              Sign up here
-            </Link>
+            <Link to="/register" className="link">Sign up here</Link>
           </p>
         </div>
       </div>

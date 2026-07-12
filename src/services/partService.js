@@ -67,7 +67,7 @@ const partService = {
   searchParts: async (query) => {
     try {
       const response = await api.get(API_ENDPOINTS.SEARCH_PARTS, {
-        params: { q: query },
+        params: { keyword: query },
       });
       return { success: true, data: response.data };
     } catch (error) {

@@ -4,12 +4,9 @@ import { getLocalStorage, removeLocalStorage } from '../utils/helpers';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  headers: { 'Content-Type': 'application/json' },
 });
 
-// Attach JWT token to every request
 api.interceptors.request.use(
   (config) => {
     const token = getLocalStorage('accessToken');
@@ -21,8 +18,6 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Only redirect to /login on 401 for NON-auth endpoints
-// Auth endpoints (login/register) returning 401/400 should be handled by the caller
 api.interceptors.response.use(
   (response) => response,
   (error) => {

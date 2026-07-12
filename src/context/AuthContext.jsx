@@ -11,7 +11,6 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const currentUser = authService.getCurrentUser();
     const token = authService.getAccessToken();
-    console.log('[AuthContext] mount check — token:', token, 'user:', currentUser);
     if (currentUser && token) {
       setUser(currentUser);
       setIsAuthenticated(true);
@@ -21,11 +20,9 @@ export const AuthProvider = ({ children }) => {
 
   const login = useCallback(async (email, password) => {
     const result = await authService.login(email, password);
-    console.log('[AuthContext] login result:', result);
     if (result.success) {
       setUser(result.user);
       setIsAuthenticated(true);
-      console.log('[AuthContext] state set — isAuthenticated: true');
     }
     return result;
   }, []);
@@ -37,8 +34,6 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const updateUser = useCallback((updatedUser) => setUser(updatedUser), []);
-
-  console.log('[AuthContext] render — isLoading:', isLoading, 'isAuthenticated:', isAuthenticated);
 
   return (
     <AuthContext.Provider value={{ user, isAuthenticated, isLoading, login, logout, updateUser }}>
