@@ -1,23 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart3, Package, ShoppingCart, Truck, AlertCircle } from 'lucide-react';
 import {
-  BarChart,
-  Bar,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer, PieChart, Pie, Cell,
 } from 'recharts';
 import reportService from '../../services/reportService';
 import Loader from '../../components/Loader/Loader';
 import './Dashboard.css';
+
+const DEFAULT_MONTHLY = [
+  { month: 'Jan', orders: 0 }, { month: 'Feb', orders: 0 },
+  { month: 'Mar', orders: 0 }, { month: 'Apr', orders: 0 },
+  { month: 'May', orders: 0 }, { month: 'Jun', orders: 0 },
+];
+
+const DEFAULT_STOCK = [
+  { name: 'In Stock', value: 0 },
+  { name: 'Low Stock', value: 0 },
+  { name: 'Out of Stock', value: 0 },
+];
+
+const COLORS = ['#10b981', '#f59e0b', '#ef4444'];
 
 const Dashboard = () => {
   const [metrics, setMetrics] = useState(null);
@@ -29,39 +32,27 @@ const Dashboard = () => {
 
   const loadDashboardData = async () => {
     setIsLoading(true);
-    const result = await reportService.getDashboardMetrics();
-    if (result.success) {
-      setMetrics(result.data);
+    try {
+      const result = await reportService.getDashboardMetrics();
+      if (result.success) {
+        setMetrics(result.data);
+      }
+    } catch (err) {
+      console.error('Failed to load dashboard:', err);
     }
     setIsLoading(false);
   };
 
-  if (isLoading) {
-    return <Loader fullScreen size="lg" />;
-  }
+  if (isLoading) return <Loader fullScreen size="lg" />;
 
-  const dashboardMetrics = metrics || {
-    totalParts: 1250,
-    lowStockParts: 45,
-    totalOrders: 320,
-    pendingOrders: 28,
-    totalSuppliers: 85,
-    monthlyOrdersData: [
-      { month: 'Jan', orders: 40 },
-      { month: 'Feb', orders: 30 },
-      { month: 'Mar', orders: 45 },
-      { month: 'Apr', orders: 50 },
-      { month: 'May', orders: 48 },
-      { month: 'Jun', orders: 52 },
-    ],
-    stockDistribution: [
-      { name: 'In Stock', value: 800 },
-      { name: 'Low Stock', value: 400 },
-      { name: 'Out of Stock', value: 50 },
-    ],
-  };
-
-  const COLORS = ['#10b981', '#f59e0b', '#ef4444'];
+  const totalParts        = metrics?.totalParts ?? 0;
+  const lowStockParts     = metrics?.lowStockParts ?? metrics?.lowStockCount ?? 0;
+  const totalOrders       = metrics?.totalOrders ?? 0;
+  const totalSuppliers    = metrics?.totalSuppliers ?? metrics?.activeSuppliers ?? 0;
+  const monthlyOrdersData = Array.isArray(metrics?.monthlyOrdersData) && metrics.monthlyOrdersData.length
+                              ? metrics.monthlyOrdersData : DEFAULT_MONTHLY;
+  const stockDistribution = Array.isArray(metrics?.stockDistribution) && metrics.stockDistribution.length
+                              ? metrics.stockDistribution : DEFAULT_STOCK;
 
   return (
     <div className="dashboard-page">
@@ -70,59 +61,46 @@ const Dashboard = () => {
         <p>Welcome to your inventory management system</p>
       </div>
 
-      {/* Metrics Cards */}
       <div className="metrics-grid">
         <div className="metric-card">
-          <div className="metric-icon blue">
-            <Package size={24} />
-          </div>
+          <div className="metric-icon blue"><Package size={24} /></div>
           <div className="metric-content">
             <h3>Total Parts</h3>
-            <p className="metric-value">{dashboardMetrics.totalParts}</p>
+            <p className="metric-value">{totalParts}</p>
             <span className="metric-label">In inventory</span>
           </div>
         </div>
-
         <div className="metric-card">
-          <div className="metric-icon warning">
-            <AlertCircle size={24} />
-          </div>
+          <div className="metric-icon warning"><AlertCircle size={24} /></div>
           <div className="metric-content">
             <h3>Low Stock</h3>
-            <p className="metric-value">{dashboardMetrics.lowStockParts}</p>
+            <p className="metric-value">{lowStockParts}</p>
             <span className="metric-label">Require ordering</span>
           </div>
         </div>
-
         <div className="metric-card">
-          <div className="metric-icon green">
-            <ShoppingCart size={24} />
-          </div>
+          <div className="metric-icon green"><ShoppingCart size={24} /></div>
           <div className="metric-content">
             <h3>Total Orders</h3>
-            <p className="metric-value">{dashboardMetrics.totalOrders}</p>
+            <p className="metric-value">{totalOrders}</p>
             <span className="metric-label">All time</span>
           </div>
         </div>
-
         <div className="metric-card">
-          <div className="metric-icon orange">
-            <Truck size={24} />
-          </div>
+          <div className="metric-icon orange"><Truck size={24} /></div>
           <div className="metric-content">
             <h3>Suppliers</h3>
-            <p className="metric-value">{dashboardMetrics.totalSuppliers}</p>
+            <p className="metric-value">{totalSuppliers}</p>
             <span className="metric-label">Active suppliers</span>
           </div>
         </div>
       </div>
 
-      {/* Charts */}
       <div className="charts-grid">
         <div className="chart-card">
           <h3>Monthly Orders</h3>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={dashboardMetrics.monthlyOrdersData}>
+            <BarChart data={monthlyOrdersData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="month" />
               <YAxis />
@@ -137,16 +115,15 @@ const Dashboard = () => {
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie
-                data={dashboardMetrics.stockDistribution}
+                data={stockDistribution}
                 cx="50%"
                 cy="50%"
                 labelLine={false}
                 label={({ name, value }) => `${name}: ${value}`}
                 outerRadius={80}
-                fill="#8884d8"
                 dataKey="value"
               >
-                {dashboardMetrics.stockDistribution.map((entry, index) => (
+                {stockDistribution.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
