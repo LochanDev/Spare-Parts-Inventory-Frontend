@@ -12,9 +12,8 @@ import './Dashboard.css';
 const COLORS = ['#10b981', '#f59e0b', '#ef4444'];
 
 const Dashboard = () => {
-  const [metrics, setMetrics] = useState(MOCK_METRICS);
+  const [metrics, setMetrics] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isMock, setIsMock] = useState(false);
 
   useEffect(() => {
     loadDashboardData();
@@ -26,38 +25,50 @@ const Dashboard = () => {
       const result = await reportService.getDashboardMetrics();
       if (result.success) {
         setMetrics(result.data);
-        setIsMock(result.isMock || false);
+      } else {
+        setMetrics(MOCK_METRICS);
       }
-    } catch (err) {
+    } catch {
       setMetrics(MOCK_METRICS);
-      setIsMock(true);
     }
     setIsLoading(false);
   };
 
   if (isLoading) return <Loader fullScreen size="lg" />;
 
-  const totalParts        = metrics?.totalParts ?? MOCK_METRICS.totalParts;
-  const lowStockParts     = metrics?.lowStockParts ?? metrics?.lowStockCount ?? MOCK_METRICS.lowStockParts;
-  const totalOrders       = metrics?.totalOrders ?? MOCK_METRICS.totalOrders;
-  const totalSuppliers    = metrics?.totalSuppliers ?? metrics?.activeSuppliers ?? MOCK_METRICS.totalSuppliers;
-  const monthlyOrdersData = Array.isArray(metrics?.monthlyOrdersData) && metrics.monthlyOrdersData.length
-                              ? metrics.monthlyOrdersData : MOCK_METRICS.monthlyOrdersData;
-  const stockDistribution = Array.isArray(metrics?.stockDistribution) && metrics.stockDistribution.length
-                              ? metrics.stockDistribution : MOCK_METRICS.stockDistribution;
+  const data = metrics || MOCK_METRICS;
+
+  const totalParts     = data.totalParts     ?? MOCK_METRICS.totalParts;
+  const lowStockParts  = data.lowStockParts  ?? data.lowStockCount ?? MOCK_METRICS.lowStockParts;
+  const totalOrders    = data.totalOrders    ?? MOCK_METRICS.totalOrders;
+  const totalSuppliers = data.totalSuppliers ?? data.activeSuppliers ?? MOCK_METRICS.totalSuppliers;
+
+  const hasRealMonthlyData = Array.isArray(data.monthlyOrdersData) &&
+    data.monthlyOrdersData.some(m => m.orders > 0);
+  const monthlyOrdersData = hasRealMonthlyData
+    ? data.monthlyOrdersData
+    : MOCK_METRICS.monthlyOrdersData;
+
+  const hasRealStockData = Array.isArray(data.stockDistribution) &&
+    data.stockDistribution.some(s => s.value > 0);
+  const stockDistribution = hasRealStockData
+    ? data.stockDistribution
+    : MOCK_METRICS.stockDistribution;
+
+  const usingMockCharts = !hasRealMonthlyData || !hasRealStockData;
 
   return (
     <div className="dashboard-page">
       <div className="dashboard-header">
         <h1>Dashboard</h1>
         <p>Welcome to your inventory management system</p>
-        {isMock && (
+        {usingMockCharts && (
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: '6px',
             background: '#fef3c7', color: '#92400e', fontSize: '12px',
             padding: '4px 10px', borderRadius: '20px', marginTop: '6px',
           }}>
-            ⚠️ Showing demo data — API unavailable
+            ⚠️ Charts showing sample data — add parts and orders to see real analytics
           </div>
         )}
       </div>
@@ -99,7 +110,7 @@ const Dashboard = () => {
 
       <div className="charts-grid">
         <div className="chart-card">
-          <h3>Monthly Orders</h3>
+          <h3>Monthly Orders {usingMockCharts && <span style={{ fontSize: '11px', color: '#9ca3af' }}>(sample)</span>}</h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={monthlyOrdersData}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -112,7 +123,7 @@ const Dashboard = () => {
         </div>
 
         <div className="chart-card">
-          <h3>Stock Distribution</h3>
+          <h3>Stock Distribution {usingMockCharts && <span style={{ fontSize: '11px', color: '#9ca3af' }}>(sample)</span>}</h3>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie
