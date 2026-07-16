@@ -1,30 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart3, Package, ShoppingCart, Truck, AlertCircle } from 'lucide-react';
+import { Package, ShoppingCart, Truck, AlertCircle } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell,
 } from 'recharts';
 import reportService from '../../services/reportService';
+import { MOCK_METRICS } from '../../utils/mockData';
 import Loader from '../../components/Loader/Loader';
 import './Dashboard.css';
-
-const DEFAULT_MONTHLY = [
-  { month: 'Jan', orders: 0 }, { month: 'Feb', orders: 0 },
-  { month: 'Mar', orders: 0 }, { month: 'Apr', orders: 0 },
-  { month: 'May', orders: 0 }, { month: 'Jun', orders: 0 },
-];
-
-const DEFAULT_STOCK = [
-  { name: 'In Stock', value: 0 },
-  { name: 'Low Stock', value: 0 },
-  { name: 'Out of Stock', value: 0 },
-];
 
 const COLORS = ['#10b981', '#f59e0b', '#ef4444'];
 
 const Dashboard = () => {
-  const [metrics, setMetrics] = useState(null);
+  const [metrics, setMetrics] = useState(MOCK_METRICS);
   const [isLoading, setIsLoading] = useState(true);
+  const [isMock, setIsMock] = useState(false);
 
   useEffect(() => {
     loadDashboardData();
@@ -36,29 +26,40 @@ const Dashboard = () => {
       const result = await reportService.getDashboardMetrics();
       if (result.success) {
         setMetrics(result.data);
+        setIsMock(result.isMock || false);
       }
     } catch (err) {
-      console.error('Failed to load dashboard:', err);
+      setMetrics(MOCK_METRICS);
+      setIsMock(true);
     }
     setIsLoading(false);
   };
 
   if (isLoading) return <Loader fullScreen size="lg" />;
 
-  const totalParts        = metrics?.totalParts ?? 0;
-  const lowStockParts     = metrics?.lowStockParts ?? metrics?.lowStockCount ?? 0;
-  const totalOrders       = metrics?.totalOrders ?? 0;
-  const totalSuppliers    = metrics?.totalSuppliers ?? metrics?.activeSuppliers ?? 0;
+  const totalParts        = metrics?.totalParts ?? MOCK_METRICS.totalParts;
+  const lowStockParts     = metrics?.lowStockParts ?? metrics?.lowStockCount ?? MOCK_METRICS.lowStockParts;
+  const totalOrders       = metrics?.totalOrders ?? MOCK_METRICS.totalOrders;
+  const totalSuppliers    = metrics?.totalSuppliers ?? metrics?.activeSuppliers ?? MOCK_METRICS.totalSuppliers;
   const monthlyOrdersData = Array.isArray(metrics?.monthlyOrdersData) && metrics.monthlyOrdersData.length
-                              ? metrics.monthlyOrdersData : DEFAULT_MONTHLY;
+                              ? metrics.monthlyOrdersData : MOCK_METRICS.monthlyOrdersData;
   const stockDistribution = Array.isArray(metrics?.stockDistribution) && metrics.stockDistribution.length
-                              ? metrics.stockDistribution : DEFAULT_STOCK;
+                              ? metrics.stockDistribution : MOCK_METRICS.stockDistribution;
 
   return (
     <div className="dashboard-page">
       <div className="dashboard-header">
         <h1>Dashboard</h1>
         <p>Welcome to your inventory management system</p>
+        {isMock && (
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: '6px',
+            background: '#fef3c7', color: '#92400e', fontSize: '12px',
+            padding: '4px 10px', borderRadius: '20px', marginTop: '6px',
+          }}>
+            ⚠️ Showing demo data — API unavailable
+          </div>
+        )}
       </div>
 
       <div className="metrics-grid">
