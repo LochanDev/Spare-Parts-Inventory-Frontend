@@ -5,7 +5,7 @@ import {
   ResponsiveContainer, PieChart, Pie, Cell,
 } from 'recharts';
 import reportService from '../../services/reportService';
-import { MOCK_METRICS } from '../../utils/Mockdata';
+import { MOCK_METRICS } from '../../utils/mockData';
 import Loader from '../../components/Loader/Loader';
 import './Dashboard.css';
 
