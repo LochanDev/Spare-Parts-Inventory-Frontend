@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../hooks/useAuth';
@@ -6,34 +6,36 @@ import AuthLayout from '../../layouts/AuthLayout';
 import './LoginPage.css';
 
 const LoginPage = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const emailRef = useRef(null);
+  const passwordRef = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
 
- const handleLogin = async () => {
-  if (!email || !password) {
-    toast.error('Please fill in all fields');
-    return;
-  }
-  setIsLoading(true);
-  try {
-    console.log('Calling login with:', email, password);
-    const result = await login(email, password);
-    console.log('Login result:', result);
-    if (result.success) {
-      toast.success('Login successful!');
-      navigate('/dashboard', { replace: true });
-    } else {
-      toast.error(result.message || 'Login failed');
+  const handleLogin = async () => {
+    const email = emailRef.current?.value?.trim();
+    const password = passwordRef.current?.value;
+
+    if (!email || !password) {
+      toast.error('Please fill in all fields');
+      return;
     }
-  } catch (err) {
-    console.error('Login error:', err);
-    toast.error('An unexpected error occurred');
-  }
-  setIsLoading(false);
-};
+
+    setIsLoading(true);
+    try {
+      const result = await login(email, password);
+      if (result.success) {
+        toast.success('Login successful!');
+        navigate('/dashboard', { replace: true });
+      } else {
+        toast.error(result.message || 'Login failed');
+      }
+    } catch (err) {
+      toast.error('An unexpected error occurred');
+    }
+    setIsLoading(false);
+  };
+
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') handleLogin();
   };
@@ -49,8 +51,7 @@ const LoginPage = () => {
             <input
               type="email"
               id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              ref={emailRef}
               onKeyDown={handleKeyDown}
               placeholder="admin@spareparts.com"
               disabled={isLoading}
@@ -61,8 +62,7 @@ const LoginPage = () => {
             <input
               type="password"
               id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              ref={passwordRef}
               onKeyDown={handleKeyDown}
               placeholder="Enter your password"
               disabled={isLoading}
