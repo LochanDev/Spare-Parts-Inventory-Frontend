@@ -12,26 +12,28 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  const handleLogin = async () => {
-    if (!email || !password) {
-      toast.error('Please fill in all fields');
-      return;
+ const handleLogin = async () => {
+  if (!email || !password) {
+    toast.error('Please fill in all fields');
+    return;
+  }
+  setIsLoading(true);
+  try {
+    console.log('Calling login with:', email, password);
+    const result = await login(email, password);
+    console.log('Login result:', result);
+    if (result.success) {
+      toast.success('Login successful!');
+      navigate('/dashboard', { replace: true });
+    } else {
+      toast.error(result.message || 'Login failed');
     }
-    setIsLoading(true);
-    try {
-      const result = await login(email, password);
-      if (result.success) {
-        toast.success('Login successful!');
-        navigate('/dashboard', { replace: true });
-      } else {
-        toast.error(result.message || 'Login failed');
-      }
-    } catch (err) {
-      toast.error('An unexpected error occurred');
-    }
-    setIsLoading(false);
-  };
-
+  } catch (err) {
+    console.error('Login error:', err);
+    toast.error('An unexpected error occurred');
+  }
+  setIsLoading(false);
+};
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') handleLogin();
   };
