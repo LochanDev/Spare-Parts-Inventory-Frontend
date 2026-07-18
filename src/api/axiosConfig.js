@@ -9,8 +9,12 @@ const api = axios.create({
 
 api.interceptors.request.use(
   (config) => {
-    const token = getLocalStorage('accessToken');
+    let token = getLocalStorage('accessToken');
     if (token) {
+      // Strip extra quotes added by JSON.stringify in setLocalStorage
+      if (typeof token === 'string') {
+        token = token.replace(/^"|"$/g, '');
+      }
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;

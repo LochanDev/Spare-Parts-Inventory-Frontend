@@ -1,6 +1,6 @@
 import api from '../api/axiosConfig';
 import { API_ENDPOINTS } from '../utils/constants';
-import { setLocalStorage, getLocalStorage, removeLocalStorage } from '../utils/helpers';
+import { getLocalStorage, removeLocalStorage } from '../utils/helpers';
 
 const authService = {
   login: async (email, password) => {
@@ -14,8 +14,11 @@ const authService = {
         email: data.email,
         role: data.role,
       };
-      setLocalStorage('accessToken', accessToken);
-      setLocalStorage('user', user);
+
+      // Store token as raw string — use localStorage directly to avoid double-quoting
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('user', JSON.stringify(user));
+
       return { success: true, user };
     } catch (error) {
       return {
@@ -38,13 +41,26 @@ const authService = {
   },
 
   logout: () => {
-    removeLocalStorage('accessToken');
-    removeLocalStorage('user');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('user');
   },
 
-  getCurrentUser: () => getLocalStorage('user'),
-  getAccessToken: () => getLocalStorage('accessToken'),
-  isAuthenticated: () => !!getLocalStorage('accessToken'),
+  getCurrentUser: () => {
+    try {
+      const user = localStorage.getItem('user');
+      return user ? JSON.parse(user) : null;
+    } catch {
+      return null;
+    }
+  },
+
+  getAccessToken: () => {
+    return localStorage.getItem('accessToken');
+  },
+
+  isAuthenticated: () => {
+    return !!localStorage.getItem('accessToken');
+  },
 };
 
 export default authService;

@@ -9,9 +9,9 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    const token = localStorage.getItem('accessToken');
     const currentUser = authService.getCurrentUser();
-    const token = authService.getAccessToken();
-    if (currentUser && token) {
+    if (token && currentUser) {
       setUser(currentUser);
       setIsAuthenticated(true);
     }
