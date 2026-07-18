@@ -14,7 +14,7 @@ const AddSupplier = () => {
     city: '',
     state: '',
     country: '',
-    pincode: '',
+    postalCode: '',
   });
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
@@ -150,12 +150,12 @@ const AddSupplier = () => {
             </div>
 
             <div className="form-group">
-              <label htmlFor="pincode">Postal Code</label>
+              <label htmlFor="postalCode">Postal Code</label>
               <input
                 type="text"
-                id="pincode"
-                name="pincode"
-                value={formData.pincode}
+                id="postalCode"
+                name="postalCode"
+                value={formData.postalCode}
                 onChange={handleChange}
                 placeholder="Pincode"
               />

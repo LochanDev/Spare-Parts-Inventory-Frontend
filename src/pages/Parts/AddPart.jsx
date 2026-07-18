@@ -28,7 +28,7 @@ const AddPart = () => {
   }, []);
 
   const loadSuppliers = async () => {
-    const result = await supplierService.getAllSuppliers({ page: 0, size: 100 });
+    const result = await supplierService.getAllSuppliers(0, 100);
     if (result.success) {
       setSuppliers(result.data?.content || result.data || []);
     }

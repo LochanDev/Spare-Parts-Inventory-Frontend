@@ -125,7 +125,7 @@ const PartList = () => {
                           {part.quantity}
                         </span>
                       </td>
-                      <td className="price">{formatCurrency(part.price)}</td>
+                      <td className="price">{formatCurrency(part.unitPrice)}</td>
                       <td>
                         <span className={`badge badge-${part.status.toLowerCase()}`}>
                           {part.status}
