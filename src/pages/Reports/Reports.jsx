@@ -3,8 +3,50 @@ import { Download, FileText, BarChart3 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import reportService from '../../services/reportService';
 import Loader from '../../components/Loader/Loader';
-import { exportToCSV, exportToExcel, exportToPDF } from '../../utils/exportUtils';
 import './Reports.css';
+
+// Extract the data array from the report response object
+const extractRows = (data, reportType) => {
+  if (!data) return [];
+  if (Array.isArray(data)) return data;
+  switch (reportType) {
+    case 'inventory': return Array.isArray(data.parts) ? data.parts : [];
+    case 'sales':     return Array.isArray(data.orders) ? data.orders : [];
+    case 'suppliers': return Array.isArray(data.suppliers) ? data.suppliers : [];
+    case 'orders':    return Array.isArray(data.orders) ? data.orders : [];
+    default:          return [];
+  }
+};
+
+// Flatten an object row for table display
+const flattenRow = (row) => {
+  const flat = {};
+  Object.entries(row).forEach(([k, v]) => {
+    if (v !== null && typeof v === 'object' && !Array.isArray(v)) {
+      Object.entries(v).forEach(([k2, v2]) => { flat[`${k}.${k2}`] = v2; });
+    } else {
+      flat[k] = v;
+    }
+  });
+  return flat;
+};
+
+const exportCSV = (rows, filename) => {
+  if (!rows.length) return;
+  const flat = rows.map(flattenRow);
+  const headers = Object.keys(flat[0]);
+  const csv = [
+    headers.join(','),
+    ...flat.map(row => headers.map(h => `"${row[h] ?? ''}"`).join(',')),
+  ].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${filename}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+};
 
 const Reports = () => {
   const [activeTab, setActiveTab] = useState('inventory');
@@ -18,56 +60,30 @@ const Reports = () => {
   const loadReport = async (reportType) => {
     setIsLoading(true);
     let result;
-
     switch (reportType) {
-      case 'inventory':
-        result = await reportService.getInventoryReport();
-        break;
-      case 'sales':
-        result = await reportService.getSalesReport();
-        break;
-      case 'suppliers':
-        result = await reportService.getSupplierReport();
-        break;
-      case 'orders':
-        result = await reportService.getOrderReport();
-        break;
-      default:
-        result = { success: false };
+      case 'inventory': result = await reportService.getInventoryReport(); break;
+      case 'sales':     result = await reportService.getSalesReport();     break;
+      case 'suppliers': result = await reportService.getSupplierReport();  break;
+      case 'orders':    result = await reportService.getOrderReport();     break;
+      default:          result = { success: false };
     }
-
     if (result.success) {
       setReportData(result.data);
     } else {
       toast.error('Failed to load report');
+      setReportData(null);
     }
     setIsLoading(false);
   };
 
-  const handleExport = async (format) => {
-    if (!reportData) {
-      toast.error('No data to export');
-      return;
-    }
+  const rows = extractRows(reportData, activeTab);
+  const flatRows = rows.map(flattenRow);
+  const columns = flatRows.length > 0 ? Object.keys(flatRows[0]) : [];
 
-    try {
-      const fileName = `${activeTab}-report`;
-      
-      if (format === 'csv') {
-        exportToCSV(reportData, fileName);
-      } else if (format === 'excel') {
-        exportToExcel(reportData, 'Report', fileName);
-      } else if (format === 'pdf') {
-        const columns = Object.keys(reportData[0] || {}).map((key) => ({
-          key,
-          label: key.charAt(0).toUpperCase() + key.slice(1),
-        }));
-        exportToPDF(columns, reportData, fileName);
-      }
-      toast.success(`Report exported as ${format.toUpperCase()}`);
-    } catch (error) {
-      toast.error('Export failed');
-    }
+  const handleExport = () => {
+    if (!flatRows.length) { toast.error('No data to export'); return; }
+    exportCSV(flatRows, `${activeTab}-report`);
+    toast.success('Report exported as CSV');
   };
 
   return (
@@ -79,55 +95,26 @@ const Reports = () => {
 
       <div className="reports-container">
         <div className="tabs">
-          <button
-            className={`tab ${activeTab === 'inventory' ? 'active' : ''}`}
-            onClick={() => setActiveTab('inventory')}
-          >
-            <BarChart3 size={18} /> Inventory
-          </button>
-          <button
-            className={`tab ${activeTab === 'sales' ? 'active' : ''}`}
-            onClick={() => setActiveTab('sales')}
-          >
-            <BarChart3 size={18} /> Sales
-          </button>
-          <button
-            className={`tab ${activeTab === 'suppliers' ? 'active' : ''}`}
-            onClick={() => setActiveTab('suppliers')}
-          >
-            <BarChart3 size={18} /> Suppliers
-          </button>
-          <button
-            className={`tab ${activeTab === 'orders' ? 'active' : ''}`}
-            onClick={() => setActiveTab('orders')}
-          >
-            <BarChart3 size={18} /> Orders
-          </button>
+          {['inventory', 'sales', 'suppliers', 'orders'].map((tab) => (
+            <button
+              key={tab}
+              className={`tab ${activeTab === tab ? 'active' : ''}`}
+              onClick={() => setActiveTab(tab)}
+            >
+              <BarChart3 size={18} />
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            </button>
+          ))}
         </div>
 
         <div className="reports-content">
           {isLoading ? (
             <Loader fullScreen size="lg" />
-          ) : reportData && reportData.length > 0 ? (
+          ) : flatRows.length > 0 ? (
             <>
               <div className="export-buttons">
-                <button
-                  className="btn btn-export"
-                  onClick={() => handleExport('csv')}
-                >
+                <button className="btn btn-export" onClick={handleExport}>
                   <Download size={18} /> Export CSV
-                </button>
-                <button
-                  className="btn btn-export"
-                  onClick={() => handleExport('excel')}
-                >
-                  <Download size={18} /> Export Excel
-                </button>
-                <button
-                  className="btn btn-export"
-                  onClick={() => handleExport('pdf')}
-                >
-                  <Download size={18} /> Export PDF
                 </button>
               </div>
 
@@ -135,18 +122,22 @@ const Reports = () => {
                 <table className="reports-table">
                   <thead>
                     <tr>
-                      {Object.keys(reportData[0] || {}).map((key) => (
-                        <th key={key}>
-                          {key.charAt(0).toUpperCase() + key.slice(1)}
+                      {columns.map((col) => (
+                        <th key={col}>
+                          {col.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase())}
                         </th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {reportData.map((row, index) => (
-                      <tr key={index}>
-                        {Object.values(row).map((value, i) => (
-                          <td key={i}>{value}</td>
+                    {flatRows.map((row, i) => (
+                      <tr key={i}>
+                        {columns.map((col) => (
+                          <td key={col}>
+                            {row[col] !== null && row[col] !== undefined
+                              ? String(row[col])
+                              : '—'}
+                          </td>
                         ))}
                       </tr>
                     ))}
